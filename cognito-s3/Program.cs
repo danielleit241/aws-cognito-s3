@@ -27,7 +27,7 @@ builder.Services.AddSingleton<IAmazonS3>(o =>
     return new AmazonS3Client(s3Settings.AccessKey, s3Settings.SecretKey, config);
 });
 
-builder.Services.AddScoped<IAwsS3, AwsS3>();
+builder.Services.AddSingleton<IAwsS3, AwsS3>();
 
 var app = builder.Build();
 
