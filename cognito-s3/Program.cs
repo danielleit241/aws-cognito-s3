@@ -59,4 +59,39 @@ app.MapPost("api/images", async ([FromForm] IFormFile file, IAwsS3 awsS3) =>
     .RequireAuthorization()
     .DisableAntiforgery();
 
+app.MapGet("api/images/{key}", async (string key, IAwsS3 awsS3) =>
+{
+    if (string.IsNullOrWhiteSpace(key))
+    {
+        return Results.BadRequest("Key is required.");
+    }
+
+    var file = await awsS3.DownloadFileAsync(key, "images");
+    return Results.File(file);
+})
+    .RequireAuthorization();
+
+app.MapDelete("api/images/{key}", async (string key, IAwsS3 awsS3) =>
+{
+    if (string.IsNullOrWhiteSpace(key))
+    {
+        return Results.BadRequest("Key is required.");
+    }
+    await awsS3.DeleteFileAsync(key, "images");
+    return Results.Ok($"File {key} deleted successfully!");
+})
+    .RequireAuthorization();
+
+app.MapGet("api/images/{key}/presigned", async (string key, IAwsS3 awsS3) =>
+{
+    if (string.IsNullOrWhiteSpace(key))
+    {
+        return Results.BadRequest("Key is required.");
+    }
+    var presignedUrl = await awsS3.PreSignedUrlAsync(key, "images");
+    return Results.Ok(new { Key = $"images/{key}", Url = presignedUrl });
+})
+    .RequireAuthorization();
+
+
 app.Run();

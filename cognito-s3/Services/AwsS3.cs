@@ -1,4 +1,5 @@
 ﻿using Amazon.S3;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
 
 namespace cognito_s3.Services
@@ -16,25 +17,38 @@ namespace cognito_s3.Services
             _bucketName = options.Value.BucketName;
         }
 
-        public Task DeleteFileAsync(string bucketName, string keyName)
+        public async Task DeleteFileAsync(string key, string type)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var request = new DeleteObjectRequest
+                {
+                    BucketName = _bucketName,
+                    Key = $"{type}/{key}"
+                };
+                await _s3Client.DeleteObjectAsync(request);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error deleting file: {ex.Message}", ex);
+            }
         }
 
-        public Task<Stream> DownloadFileAsync(string bucketName, string keyName)
+        public async Task<Stream> DownloadFileAsync(string key, string type)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<List<string>> ListBucketsAsync()
-        {
-            throw new NotImplementedException();
+            var request = new GetObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = $"{type}/{key}"
+            };
+            var response = await _s3Client.GetObjectAsync(request);
+            return response.ResponseStream;
         }
 
         public async Task<string> UploadFileAsync(IFormFile file, string type, Stream fileStream)
         {
             var key = $"{Guid.NewGuid()}_{file.FileName}";
-            var putRequest = new Amazon.S3.Model.PutObjectRequest
+            var putRequest = new PutObjectRequest
             {
                 BucketName = _bucketName,
                 Key = $"{type}/{key}",
@@ -49,6 +63,27 @@ namespace cognito_s3.Services
             await _s3Client.PutObjectAsync(putRequest);
             var fileUrl = $"https://{_bucketName}.s3.{_options.Value.Region}.amazonaws.com/{type}/{key}";
             return fileUrl;
+        }
+
+        public async Task<string> PreSignedUrlAsync(string key, string type)
+        {
+            try
+            {
+                var request = new GetPreSignedUrlRequest
+                {
+                    BucketName = _bucketName,
+                    Key = $"{type}/{key}",
+                    Expires = DateTime.UtcNow.AddMinutes(15),
+                    Verb = HttpVerb.GET
+                };
+
+                var url = await _s3Client.GetPreSignedURLAsync(request);
+                return url;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error generating presigned URL: {ex.Message}", ex);
+            }
         }
     }
 }
