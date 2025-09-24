@@ -103,8 +103,6 @@ npm start
 
 - [AWS Cognito](https://aws.amazon.com/cognito/) - Xác thực người dùng
 - [AWS S3](https://aws.amazon.com/s3/) - Lưu trữ file ảnh
-- [ASP.NET Core Minimal API] hoặc [ExpressJS] (tuỳ vào code backend)
-- [Amazon S3 SDK], [Amazon Cognito SDK]
 
 ---
 
